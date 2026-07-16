@@ -2,11 +2,11 @@
 
 Simple library to remove signature and replies and extract attachments and inline attachments from an email.
 
-At [https://deerdesigner.com](Deer Designer) we were having trouble to receive emails and filter out unnecessary content. After a careful analysis, I noticed machine learning didn't deal well with HTML mixed with attachments and embedded files. Our use case depends on enriched HTML and there weren't any good libs out there that solve this problem. So I decided to create this library.
+At [Deer Designer](https://deerdesigner.com) we were having trouble to receive emails and filter out unnecessary content. After a careful analysis, I noticed machine learning didn't deal well with HTML mixed with attachments and embedded files. Our use case depends on enriched HTML and there weren't any good libs out there that solve this problem. So I decided to create this library.
 
 If you stumble upon an email that is not parsed correctly, please create an issue and attach the raw .eml file.
 
-Example of a parsed email: [sample](./sample/sample.ts)
+Example of a parsed email: [sample](https://github.com/philipedc/lite-email-parser/blob/main/sample/sample.ts)
 
 ## Import
 

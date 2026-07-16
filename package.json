@@ -1,6 +1,6 @@
 {
   "name": "lite-email-parser",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Parse email to get signature, replies, attachments and inline images",
   "main": "./dist/cjs/index.js",
   "module": "./dist/index.js",
@@ -22,7 +22,6 @@
   ],
   "scripts": {
     "build": "npx tsc && npx tsc --module commonjs --outDir dist/cjs --declaration && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
-    "start": "node ./dist/index.js",
     "test": "npx -y tsx sample/sample.ts"
   },
   "author": "philipedc",
@@ -34,7 +33,6 @@
   "bugs": {
     "url": "https://github.com/philipedc/lite-email-parser/issues"
   },
-  "homepage": "https://github.com/philipedc/lite-email-parser#readme",
   "keywords": [
     "email",
     "parser",
