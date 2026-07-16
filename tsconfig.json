@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "module": "nodenext",
+    // "nodenext" makes typescript aware of the Node context
+    // that means Node decides if each file is ESM or CJS using the package-level "type"
+    // if type === "module" Node emits *.js files as ESM
+    // if type === "commonjs" Node emits *.js files as CJS
+    // .mts -> .js as ESM
+    // .cts -> .js as CJS
+    // .ts -> treated based on "type" field in package.json
+    // This is useful to support multiple module systems
+    "declaration": true,
+    // generate .d.ts files
+    // it's used for type checking for external users of this package
+    // they don't read the .ts files, they read the .d.ts files
+    "emitDeclarationOnly": false,
+    // avoid emitting .js files
+    // with declaration true and emitDeclarationOnly false, we get both .ts and .d.ts files
+    "outDir": "dist/",
+    "declarationMap": true,
+    // it emits .d.ts.map files
+    // those are used for editors for things like go to and help inspect types
+    "noImplicitAny": true,
+    "rootDir": "./src"
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules/",
+    "dist/"
+  ]
+}
