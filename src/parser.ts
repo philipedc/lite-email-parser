@@ -15,8 +15,28 @@ export async function parseEmail(
 
   const cleanedContent = extractFirstMessage(content);
 
-  const attachments = await attachmentsToFiles(parsedEmail.attachments || []);
-  const inlineAttachments = inlineAttachmentsToFiles(cleanedContent);
+  const attachments: IFile[] = [];
+  const inlineAttachments: IFile[] = [];
+
+  for (const att of parsedEmail.attachments || []) {
+    const filename = att.filename || new Date().toDateString();
+    const contentType = att.contentType || 'application/octet-stream';
+
+    const file: IFile = {
+      name: filename,
+      type: contentType,
+      size: att.size,
+      buffer: att.content,
+    };
+
+    if (att.related) {
+      const base64Data = att.content.toString('base64');
+      file.originalSrc = `data:${contentType};base64,${base64Data}`;
+      inlineAttachments.push(file);
+    } else {
+      attachments.push(file);
+    }
+  }
 
   return {
     lastMessage: cleanedContent,
@@ -25,56 +45,6 @@ export async function parseEmail(
   };
 }
 
-async function attachmentsToFiles(attach: Attachment[]) {
-  const files: IFile[] = [];
-
-  for (const att of attach) {
-    const filename = att.filename || new Date().toDateString();
-    const contentType = att.contentType || 'application/octet-stream';
-
-    const attachment: IFile = {
-      name: filename,
-      type: contentType,
-      size: att.size,
-      buffer: att.content,
-    };
-
-    files.push(attachment);
-  }
-
-  return files;
-}
-
-function inlineAttachmentsToFiles(content: string): IFile[] {
-  const files: IFile[] = [];
-  const $ = cheerio.load(content);
-
-  // Base64 embedded images — extract them as IFile entries
-  const base64Images = $('img[src^="data:"]').toArray();
-  for (const el of base64Images) {
-    const src = $(el).attr('src');
-    if (!src) continue;
-
-    const matches = src.match(/^data:(image\/(\w+));base64,(.*)$/);
-    if (matches) {
-      const contentType = matches[1];
-      const extension = matches[2];
-      const base64Data = matches[3];
-      const buffer = Buffer.from(base64Data, 'base64');
-
-      files.push({
-        name: `inline-${new Date().toISOString()}.${extension}`,
-        src: src, // if we upload to cloud, replace src
-        type: contentType,
-        size: buffer.byteLength,
-        buffer,
-        originalSrc: src,
-      });
-    }
-  }
-
-  return files;
-}
 
 
 // Replace src attributes with the uploaded file URLs

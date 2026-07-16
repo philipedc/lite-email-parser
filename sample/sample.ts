@@ -1,7 +1,7 @@
 import { parseEmail, replaceSrc } from 'lite-email-parser';
 import * as fs from 'fs';
 
-const email = fs.readFileSync('email.eml', 'utf-8');
+const email = fs.readFileSync('sample/sample1.eml', 'utf-8');
 const buffer = Buffer.from(email, 'utf-8');
 
 const { lastMessage, attachments, inlineAttachments } = await parseEmail(buffer);
