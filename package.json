@@ -27,6 +27,27 @@
   },
   "author": "philipedc",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/philipedc/lite-email-parser.git"
+  },
+  "bugs": {
+    "url": "https://github.com/philipedc/lite-email-parser/issues"
+  },
+  "homepage": "https://github.com/philipedc/lite-email-parser#readme",
+  "keywords": [
+    "email",
+    "parser",
+    "email-parser",
+    "mailparser",
+    "extract-attachments",
+    "remove-signature",
+    "remove-replies",
+    "inline-images",
+    "lite-email-parser",
+    "email-to-html",
+    "signature-remover"
+  ],
   "dependencies": {
     "cheerio": "^1.2.0",
     "mailparser": "^3.9.14"
