@@ -4,7 +4,6 @@
 #include <string>
 #include <algorithm>
 #include <sstream>
-#include <regex>
 
 #include "gumbo.h"
 #include "html_parser.h"
@@ -103,11 +102,28 @@ static std::string rebuildHtml(GumboNode* node, bool remove_signatures = false, 
     if (node->type == GUMBO_NODE_TEXT) {
         std::string text = node->v.text.text;
         if (remove_dividers && stop_rendering) {
-            std::regex divider_regex("-{5,}.*?-{5,}");
-            std::smatch match;
-            if (std::regex_search(text, match, divider_regex)) {
-                *stop_rendering = true;
-                return text.substr(0, match.position());
+            // Manual scan for divider pattern: 5+ hyphens, any text, 5+ hyphens
+            const char* str = text.c_str();
+            size_t len = text.size();
+            for (size_t i = 0; i < len; ++i) {
+                if (str[i] != '-') continue;
+                // Count leading hyphens
+                size_t hyphenStart = i;
+                while (i < len && str[i] == '-') ++i;
+                size_t firstCount = i - hyphenStart;
+                if (firstCount < 5) continue;
+                // Scan for trailing 5+ hyphens
+                for (size_t j = i; j < len; ++j) {
+                    if (str[j] != '-') continue;
+                    size_t trailStart = j;
+                    while (j < len && str[j] == '-') ++j;
+                    if (j - trailStart >= 5) {
+                        // Found divider: truncate at the start of first hyphen run
+                        *stop_rendering = true;
+                        return text.substr(0, hyphenStart);
+                    }
+                }
+                // No trailing hyphens found after this run, continue scanning
             }
         }
         return text;

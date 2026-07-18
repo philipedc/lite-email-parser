@@ -21,42 +21,129 @@ ParseEmailResult parseEmail(const std::string& rawEmail) {
 
     // Split headers from body (separated by first blank line)
     std::string::size_type headerEnd = rawEmail.find("\r\n\r\n");
+    std::string lineEnding = "\r\n";
     if (headerEnd == std::string::npos) {
         headerEnd = rawEmail.find("\n\n");
+        lineEnding = "\n";
+    }
+    if (headerEnd == std::string::npos) {
+        return result;
     }
 
-    std::string headers;
-    if (headerEnd != std::string::npos) {
-        headers = rawEmail.substr(0, headerEnd);
-    }
+    std::string headers = rawEmail.substr(0, headerEnd);
+    std::string body = rawEmail.substr(headerEnd + lineEnding.size() * 2);
 
     // Extract top-level headers
     result.subject = detail::getHeaderValue(headers, "Subject");
     result.from = detail::getHeaderValue(headers, "From");
     result.to = detail::getHeaderValue(headers, "To");
 
-    // Extract HTML body
-    ExtractionResult extraction = extractHtmlBody(rawEmail);
-    result.text = extraction.body;
-
-    // Replace cid: references with base64 data URIs
-    // We need to re-parse to get all parts with their Content-IDs
+    // Parse MIME parts once
     std::string contentType = detail::getHeaderValue(headers, "Content-Type");
     std::string boundary = detail::extractBoundary(contentType);
+
+    std::vector<detail::MimePart> parts;
     if (!boundary.empty()) {
-        std::string::size_type bodyStart = headerEnd;
-        // Find the line ending used
-        if (rawEmail[headerEnd] == '\r') {
-            bodyStart = headerEnd + 4; // skip \r\n\r\n
-        } else {
-            bodyStart = headerEnd + 2; // skip \n\n
-        }
-        std::string emailBody = rawEmail.substr(bodyStart);
-        auto allParts = detail::parseMimeParts(emailBody, boundary);
-        result.text = detail::replaceCidWithBase64(result.text, allParts);
+        parts = detail::parseMimeParts(body, boundary);
+    } else {
+        // Not multipart — single body
+        std::string encoding = detail::getHeaderValue(headers, "Content-Transfer-Encoding");
+        detail::MimePart single;
+        single.contentType = contentType;
+        single.transferEncoding = encoding;
+        single.body = body;
+        parts.push_back(single);
     }
 
-    // TODO: attachment extraction will be added here later
+    // Find HTML body (or fall back to text/plain) from the parsed parts
+    for (const auto& part : parts) {
+        std::string ct = part.contentType;
+        std::transform(ct.begin(), ct.end(), ct.begin(),
+                       [](unsigned char c) { return std::tolower(c); });
+        if (ct.find("text/html") != std::string::npos) {
+            std::string enc = part.transferEncoding;
+            std::transform(enc.begin(), enc.end(), enc.begin(),
+                           [](unsigned char c) { return std::tolower(c); });
+            if (enc.find("quoted-printable") != std::string::npos) {
+                result.text = detail::decodeQuotedPrintable(part.body);
+            } else if (enc.find("base64") != std::string::npos) {
+                result.text = detail::decodeBase64(part.body);
+            } else {
+                result.text = part.body;
+            }
+            break;
+        }
+    }
+
+    // Fallback to text/plain if no HTML found
+    if (result.text.empty()) {
+        for (const auto& part : parts) {
+            std::string ct = part.contentType;
+            std::transform(ct.begin(), ct.end(), ct.begin(),
+                           [](unsigned char c) { return std::tolower(c); });
+            if (ct.find("text/plain") != std::string::npos) {
+                std::string enc = part.transferEncoding;
+                std::transform(enc.begin(), enc.end(), enc.begin(),
+                               [](unsigned char c) { return std::tolower(c); });
+                if (enc.find("quoted-printable") != std::string::npos) {
+                    result.text = detail::decodeQuotedPrintable(part.body);
+                } else if (enc.find("base64") != std::string::npos) {
+                    result.text = detail::decodeBase64(part.body);
+                } else {
+                    result.text = part.body;
+                }
+                break;
+            }
+        }
+    }
+
+    // Replace cid: references with base64 data URIs (using same parts, no re-parse)
+    if (!result.text.empty() && !parts.empty()) {
+        result.text = detail::replaceCidWithBase64(result.text, parts);
+    }
+
+    // Extract attachments from parsed MIME parts
+    for (const auto& part : parts) {
+        std::string ct = part.contentType;
+        std::transform(ct.begin(), ct.end(), ct.begin(),
+                       [](unsigned char c) { return std::tolower(c); });
+
+        // Skip text parts (already used for body)
+        if (ct.find("text/html") != std::string::npos ||
+            ct.find("text/plain") != std::string::npos) {
+            continue;
+        }
+
+        // Skip parts with no content type (shouldn't happen, but guard)
+        if (ct.empty()) continue;
+
+        // Decode the attachment body
+        std::string rawData;
+        std::string enc = part.transferEncoding;
+        std::transform(enc.begin(), enc.end(), enc.begin(),
+                       [](unsigned char c) { return std::tolower(c); });
+        if (enc.find("base64") != std::string::npos) {
+            rawData = detail::decodeBase64(part.body);
+        } else if (enc.find("quoted-printable") != std::string::npos) {
+            rawData = detail::decodeQuotedPrintable(part.body);
+        } else {
+            rawData = part.body;
+        }
+
+        Attachment att;
+        att.name = part.filename.empty() ? "attachment" : part.filename;
+        att.type = detail::extractMimeType(part.contentType);
+        att.size = rawData.size();
+        att.buffer = std::move(rawData);
+
+        // If it has a Content-ID, it's an inline attachment
+        if (!part.contentId.empty()) {
+            att.originalSrc = "data:" + att.type + ";base64," + detail::encodeBase64(att.buffer);
+            result.inlineAttachments.push_back(std::move(att));
+        } else {
+            result.attachments.push_back(std::move(att));
+        }
+    }
 
     return result;
 }
