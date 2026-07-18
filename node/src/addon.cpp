@@ -98,12 +98,43 @@ Napi::Value ParseEmailWrapped(const Napi::CallbackInfo& info) {
     return obj;
 }
 
+Napi::String ReplaceSrcWrapped(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    if (info.Length() < 2 || !info[0].IsString() || !info[1].IsArray()) {
+        Napi::TypeError::New(env, "Expected (string, Array) arguments").ThrowAsJavaScriptException();
+        return Napi::String::New(env, "");
+    }
+
+    std::string html = info[0].As<Napi::String>().Utf8Value();
+    Napi::Array filesArray = info[1].As<Napi::Array>();
+
+    std::vector<liteEmailParser::Attachment> files;
+    for (uint32_t i = 0; i < filesArray.Length(); ++i) {
+        Napi::Value val = filesArray.Get(i);
+        if (!val.IsObject()) continue;
+        Napi::Object fileObj = val.As<Napi::Object>();
+
+        liteEmailParser::Attachment att;
+        if (fileObj.Has("originalSrc") && fileObj.Get("originalSrc").IsString()) {
+            att.originalSrc = fileObj.Get("originalSrc").As<Napi::String>().Utf8Value();
+        }
+        if (fileObj.Has("src") && fileObj.Get("src").IsString()) {
+            att.src = fileObj.Get("src").As<Napi::String>().Utf8Value();
+        }
+        files.push_back(att);
+    }
+
+    std::string result = liteEmailParser::replaceSrc(html, files);
+    return Napi::String::New(env, result);
+}
+
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
     exports.Set(Napi::String::New(env, "cleanHtml"), Napi::Function::New(env, CleanHtmlWrapped));
     exports.Set(Napi::String::New(env, "removeSignature"), Napi::Function::New(env, RemoveSignatureWrapped));
     exports.Set(Napi::String::New(env, "removeReplies"), Napi::Function::New(env, RemoveRepliesWrapped));
     exports.Set(Napi::String::New(env, "removeDividers"), Napi::Function::New(env, RemoveDividersWrapped));
     exports.Set(Napi::String::New(env, "parseEmail"), Napi::Function::New(env, ParseEmailWrapped));
+    exports.Set(Napi::String::New(env, "replaceSrc"), Napi::Function::New(env, ReplaceSrcWrapped));
     return exports;
 }
 

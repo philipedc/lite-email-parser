@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { ParseEmailResult } from './types.js';
+import { IFile, ParseEmailResult } from './types.js';
 
 // Load the native addon from build/Release/parser.node
 // prebuild-install downloads it there from GitHub releases on npm install
@@ -27,6 +27,10 @@ export function removeReplies(html: string): string {
 
 export function removeDividers(html: string): string {
   return addon.removeDividers(html);
+}
+
+export function replaceSrc(html: string, files: IFile[]): string {
+  return addon.replaceSrc(html, files);
 }
 
 // Types

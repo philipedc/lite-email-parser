@@ -160,6 +160,28 @@ std::string readEmailFile(const std::string& filePath) {
     return ss.str();
 }
 
+std::string replaceSrc(const std::string& html, const std::vector<Attachment>& files) {
+    std::string result = html;
+
+    for (const auto& file : files) {
+        if (file.originalSrc.empty() || file.src.empty()) {
+            continue;
+        }
+
+        // Find and replace src="<originalSrc>" with src="<newSrc>"
+        std::string searchAttr = "src=\"" + file.originalSrc + "\"";
+        std::string replaceAttr = "src=\"" + file.src + "\"";
+
+        std::string::size_type pos = 0;
+        while ((pos = result.find(searchAttr, pos)) != std::string::npos) {
+            result.replace(pos, searchAttr.size(), replaceAttr);
+            pos += replaceAttr.size();
+        }
+    }
+
+    return result;
+}
+
 ExtractionResult extractHtmlBody(const std::string& rawEmail) {
     if (rawEmail.empty()) {
         return {"", false};

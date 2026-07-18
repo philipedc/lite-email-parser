@@ -43,6 +43,10 @@ ExtractionResult extractHtmlBody(const std::string& rawEmail);
 // Reads an .eml file from disk into a string buffer
 std::string readEmailFile(const std::string& filePath);
 
+// Replaces img src attributes in HTML: for each file with originalSrc and src set,
+// finds matching img elements and swaps the src to the new URL.
+std::string replaceSrc(const std::string& html, const std::vector<Attachment>& files);
+
 namespace detail {
 
 // Represents a single MIME part extracted from the email
