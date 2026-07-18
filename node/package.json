@@ -1,6 +1,6 @@
 {
   "name": "lite-email-parser",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "description": "Parse email to get signature, replies, attachments and inline images",
   "main": "./dist/cjs/index.js",
   "module": "./dist/index.js",
@@ -20,10 +20,18 @@
   "files": [
     "dist/"
   ],
+  "binary": {
+    "module_name": "parser",
+    "module_path": "./build/Release/",
+    "host": "https://github.com/philipedc/lite-email-parser/releases/download/",
+    "remote_path": "{version}",
+    "package_name": "{module_name}-v{version}-{node_abi}-{platform}-{arch}.tar.gz"
+  },
   "scripts": {
-    "install": "node-gyp rebuild",
+    "install": "prebuild-install",
     "build": "node-gyp rebuild && npx tsc && npx tsc --module commonjs --outDir dist/cjs --declaration && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
-    "test": "npx -y tsx samples/sample.ts"
+    "test": "npx -y tsx samples/sample.ts",
+    "prebuild": "node-gyp rebuild && mkdir -p prebuilds && tar -czf prebuilds/parser-v2.0.0-napi-v9-linux-x64.tar.gz build/Release/parser.node"
   },
   "author": "philipedc",
   "type": "module",
@@ -48,7 +56,8 @@
     "signature-remover"
   ],
   "dependencies": {
-    "node-addon-api": "^8.0.0"
+    "node-addon-api": "^8.0.0",
+    "prebuild-install": "^7.1.2"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
