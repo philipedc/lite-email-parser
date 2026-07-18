@@ -5,3 +5,7 @@ dist/
 build/
 bin/
 prebuilds
+*.o
+*.tar.gz
+*.gperf
+*.in
