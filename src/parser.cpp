@@ -1,25 +1,35 @@
 #include "html_extractor.h"
+#include "html_parser.h"
 
 #include <iostream>
 #include <string>
+#include <fstream>
+#include <stdlib.h>
 
-int main(int argc, char* argv[]) {
-    std::string filePath = "sample/sample1.eml";
-    if (argc > 1) {
-        filePath = argv[1];
+int main(int argc, char** argv) {
+    if (argc != 2) {
+        std::cout << "Usage: email-parser <filename>\n";
+        exit(EXIT_FAILURE);
+    }
+    const char* filename = argv[1];
+
+    std::ifstream in(filename, std::ios::in | std::ios::binary);
+    if (!in) {
+        std::cout << "File " << filename << " not found!\n";
+        exit(EXIT_FAILURE);
     }
 
-    std::cout << "Reading: " << filePath << std::endl;
+    std::string contents;
+    in.seekg(0, std::ios::end);
+    contents.resize(in.tellg());
+    in.seekg(0, std::ios::beg);
+    in.read(&contents[0], contents.size());
+    in.close();
 
-    std::string rawEmail = liteEmailParser::readEmailFile(filePath);
-    if (rawEmail.empty()) {
-        std::cerr << "Failed to read email file." << std::endl;
-        return 1;
-    }
+    std::cout << "Buffer size: " << contents.size() << " bytes" << std::endl;
 
-    std::cout << "Buffer size: " << rawEmail.size() << " bytes" << std::endl;
-
-    liteEmailParser::ParseEmailResult result = liteEmailParser::parseEmail(rawEmail);
+    // Parse the email from the raw buffer
+    liteEmailParser::ParseEmailResult result = liteEmailParser::parseEmail(contents);
 
     std::cout << "Subject: " << result.subject << std::endl;
     std::cout << "From: " << result.from << std::endl;
@@ -27,7 +37,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Body length: " << result.text.size() << " chars" << std::endl;
 
     if (!result.text.empty()) {
-        std::cout << "\n--- Body output ---\n" << result.text << std::endl;
+        std::cout << "\n--- Body output (Cleaned) ---\n" << liteEmailParser::cleanHtml(result.text) << std::endl;
     } else {
         std::cout << "\n(No body extracted)" << std::endl;
     }
