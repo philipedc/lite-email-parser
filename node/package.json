@@ -21,8 +21,9 @@
     "dist/"
   ],
   "scripts": {
-    "build": "npx tsc && npx tsc --module commonjs --outDir dist/cjs --declaration && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
-    "test": "npx -y tsx sample/sample.ts"
+    "install": "node-gyp rebuild",
+    "build": "node-gyp rebuild && npx tsc && npx tsc --module commonjs --outDir dist/cjs --declaration && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
+    "test": "npx -y tsx samples/sample.ts"
   },
   "author": "philipedc",
   "type": "module",
@@ -47,11 +48,11 @@
     "signature-remover"
   ],
   "dependencies": {
-    "cheerio": "^1.2.0",
-    "mailparser": "^3.9.14"
+    "node-addon-api": "^8.0.0"
   },
   "devDependencies": {
-    "@types/mailparser": "^3.4.6",
+    "@types/node": "^20.11.0",
+    "node-gyp": "^10.1.0",
     "typescript": "^7.0.2"
   }
 }
