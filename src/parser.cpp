@@ -19,13 +19,15 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Buffer size: " << rawEmail.size() << " bytes" << std::endl;
 
-    liteEmailParser::ExtractionResult result = liteEmailParser::extractHtmlBody(rawEmail);
+    liteEmailParser::ParseEmailResult result = liteEmailParser::parseEmail(rawEmail);
 
-    std::cout << "Is HTML: " << (result.isHtml ? "true" : "false") << std::endl;
-    std::cout << "Body length: " << result.body.size() << " chars" << std::endl;
+    std::cout << "Subject: " << result.subject << std::endl;
+    std::cout << "From: " << result.from << std::endl;
+    std::cout << "To: " << result.to << std::endl;
+    std::cout << "Body length: " << result.text.size() << " chars" << std::endl;
 
-    if (!result.body.empty()) {
-        std::cout << "\n--- Body output ---\n" << result.body << std::endl;
+    if (!result.text.empty()) {
+        std::cout << "\n--- Body output ---\n" << result.text << std::endl;
     } else {
         std::cout << "\n(No body extracted)" << std::endl;
     }

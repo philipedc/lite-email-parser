@@ -12,6 +12,38 @@
 
 namespace liteEmailParser {
 
+ParseEmailResult parseEmail(const std::string& rawEmail) {
+    ParseEmailResult result;
+
+    if (rawEmail.empty()) {
+        return result;
+    }
+
+    // Split headers from body (separated by first blank line)
+    std::string::size_type headerEnd = rawEmail.find("\r\n\r\n");
+    if (headerEnd == std::string::npos) {
+        headerEnd = rawEmail.find("\n\n");
+    }
+
+    std::string headers;
+    if (headerEnd != std::string::npos) {
+        headers = rawEmail.substr(0, headerEnd);
+    }
+
+    // Extract top-level headers
+    result.subject = detail::getHeaderValue(headers, "Subject");
+    result.from = detail::getHeaderValue(headers, "From");
+    result.to = detail::getHeaderValue(headers, "To");
+
+    // Extract HTML body
+    ExtractionResult extraction = extractHtmlBody(rawEmail);
+    result.text = extraction.body;
+
+    // TODO: attachment extraction will be added here later
+
+    return result;
+}
+
 std::string readEmailFile(const std::string& filePath) {
     std::ifstream file(filePath, std::ios::in | std::ios::binary);
     if (!file.is_open()) {

@@ -6,11 +6,34 @@
 
 namespace liteEmailParser {
 
+// Represents a file attachment (mirrors IFile from types.ts)
+struct Attachment {
+    std::string name;          // filename (defaults to current date if absent)
+    std::string type;          // MIME content type (e.g. "image/png")
+    std::size_t size = 0;      // size in bytes
+    std::string buffer;        // raw binary content
+    std::string src;           // uploaded URL (populated by replaceSrc after upload)
+    std::string originalSrc;   // base64 data URI for inline attachments (e.g. "data:image/png;base64,...")
+};
+
+// Full result of parsing an email
+struct ParseEmailResult {
+    std::string subject;
+    std::string from;
+    std::string to;
+    std::string text;                          // cleaned HTML (or plain text fallback)
+    std::vector<Attachment> attachments;        // regular attachments
+    std::vector<Attachment> inlineAttachments;  // inline (cid-referenced) attachments
+};
+
 // Result of HTML extraction from a raw email buffer
 struct ExtractionResult {
     std::string body;   // HTML content (or plain text fallback)
     bool isHtml;        // true if body came from a text/html part
 };
+
+// Main entry point: parses a raw .eml buffer into a full result.
+ParseEmailResult parseEmail(const std::string& rawEmail);
 
 // Main entry point: extracts the HTML (or text) body from a raw .eml buffer.
 // Parses MIME boundaries, finds the text/html part (falls back to text/plain),
