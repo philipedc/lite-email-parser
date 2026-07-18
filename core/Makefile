@@ -4,7 +4,7 @@ LDFLAGS = -lgumbo
 
 SRC = src/html_parser.cpp src/html_extractor.cpp
 SAMPLE_SRC = samples/sample.cpp
-TARGET = bin/parser_sample
+TARGET = bin/parser
 
 .PHONY: all clean run
 
