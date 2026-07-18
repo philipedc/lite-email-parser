@@ -18,20 +18,25 @@
     }
   },
   "files": [
-    "dist/"
+    "dist/",
+    "binding.gyp",
+    "src/addon.cpp"
   ],
   "binary": {
     "module_name": "parser",
     "module_path": "./build/Release/",
     "host": "https://github.com/philipedc/lite-email-parser/releases/download/",
     "remote_path": "{version}",
-    "package_name": "{module_name}-v{version}-{node_abi}-{platform}-{arch}.tar.gz"
+    "package_name": "{module_name}-v{version}-napi-v9-{platform}-{arch}.tar.gz",
+    "napi_versions": [9]
   },
   "scripts": {
-    "install": "prebuild-install",
-    "build": "node-gyp rebuild && npx tsc && npx tsc --module commonjs --outDir dist/cjs --declaration && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
-    "test": "npx -y tsx samples/sample.ts",
-    "prebuild": "node-gyp rebuild && mkdir -p prebuilds && tar -czf prebuilds/parser-v2.0.0-napi-v9-linux-x64.tar.gz build/Release/parser.node"
+    "install": "prebuild-install || node-gyp rebuild",
+    "build:native": "node-gyp rebuild",
+    "build:ts": "npx tsc && npx tsc --module commonjs --outDir dist/cjs --declaration && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
+    "build": "npm run build:native && npm run build:ts",
+    "prebuild": "prebuildify --napi --strip",
+    "test": "npx -y tsx samples/sample.ts"
   },
   "author": "philipedc",
   "type": "module",
@@ -62,6 +67,7 @@
   "devDependencies": {
     "@types/node": "^20.11.0",
     "node-gyp": "^10.1.0",
+    "prebuildify": "^6.0.0",
     "typescript": "^7.0.2"
   }
 }
