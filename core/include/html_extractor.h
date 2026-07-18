@@ -49,6 +49,9 @@ namespace detail {
 struct MimePart {
     std::string contentType;       // e.g. "text/html; charset=\"UTF-8\""
     std::string transferEncoding;  // e.g. "quoted-printable", "base64"
+    std::string contentId;         // e.g. "ii_mrnoxu771" (without angle brackets)
+    std::string contentDisposition; // e.g. "attachment", "inline"
+    std::string filename;          // from Content-Disposition or Content-Type name=
     std::string body;              // raw body content of this part
 };
 
@@ -68,6 +71,23 @@ std::string decodeQuotedPrintable(const std::string& input);
 
 // Decode base64 encoded content
 std::string decodeBase64(const std::string& input);
+
+// Encode binary data to base64
+std::string encodeBase64(const std::string& input);
+
+// Extract the MIME type (e.g. "image/png") from a Content-Type header value
+std::string extractMimeType(const std::string& contentTypeHeader);
+
+// Extract Content-ID value, stripping angle brackets
+std::string extractContentId(const std::string& contentIdHeader);
+
+// Extract filename from Content-Disposition or Content-Type name= parameter
+std::string extractFilename(const std::string& contentDisposition,
+                            const std::string& contentType);
+
+// Replace cid: references in HTML with base64 data URIs using the provided parts
+std::string replaceCidWithBase64(const std::string& html,
+                                 const std::vector<MimePart>& parts);
 
 }  // namespace detail
 

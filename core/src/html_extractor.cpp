@@ -39,6 +39,23 @@ ParseEmailResult parseEmail(const std::string& rawEmail) {
     ExtractionResult extraction = extractHtmlBody(rawEmail);
     result.text = extraction.body;
 
+    // Replace cid: references with base64 data URIs
+    // We need to re-parse to get all parts with their Content-IDs
+    std::string contentType = detail::getHeaderValue(headers, "Content-Type");
+    std::string boundary = detail::extractBoundary(contentType);
+    if (!boundary.empty()) {
+        std::string::size_type bodyStart = headerEnd;
+        // Find the line ending used
+        if (rawEmail[headerEnd] == '\r') {
+            bodyStart = headerEnd + 4; // skip \r\n\r\n
+        } else {
+            bodyStart = headerEnd + 2; // skip \n\n
+        }
+        std::string emailBody = rawEmail.substr(bodyStart);
+        auto allParts = detail::parseMimeParts(emailBody, boundary);
+        result.text = detail::replaceCidWithBase64(result.text, allParts);
+    }
+
     // TODO: attachment extraction will be added here later
 
     return result;
@@ -228,6 +245,8 @@ std::vector<MimePart> parseMimeParts(const std::string& rawContent,
 
             std::string partCt = getHeaderValue(partHeaders, "Content-Type");
             std::string partEnc = getHeaderValue(partHeaders, "Content-Transfer-Encoding");
+            std::string partCid = getHeaderValue(partHeaders, "Content-ID");
+            std::string partDisp = getHeaderValue(partHeaders, "Content-Disposition");
 
             // Check if this part is itself multipart (nested)
             std::string nestedBoundary = extractBoundary(partCt);
@@ -239,6 +258,9 @@ std::vector<MimePart> parseMimeParts(const std::string& rawContent,
                 MimePart part;
                 part.contentType = partCt;
                 part.transferEncoding = partEnc;
+                part.contentId = extractContentId(partCid);
+                part.contentDisposition = partDisp;
+                part.filename = extractFilename(partDisp, partCt);
                 part.body = partBody;
                 results.push_back(part);
             }
@@ -395,6 +417,135 @@ std::string decodeBase64(const std::string& input) {
         }
     }
     return out;
+}
+
+std::string encodeBase64(const std::string& input) {
+    std::string out;
+    const auto* data = reinterpret_cast<const unsigned char*>(input.data());
+    std::size_t len = input.size();
+    out.reserve(((len + 2) / 3) * 4);
+
+    std::size_t i = 0;
+    while (i + 3 <= len) {
+        std::uint32_t n = (data[i] << 16) | (data[i + 1] << 8) | data[i + 2];
+        out.push_back(kEncodeTable[(n >> 18) & 0x3F]);
+        out.push_back(kEncodeTable[(n >> 12) & 0x3F]);
+        out.push_back(kEncodeTable[(n >> 6) & 0x3F]);
+        out.push_back(kEncodeTable[n & 0x3F]);
+        i += 3;
+    }
+
+    if (std::size_t rem = len - i; rem > 0) {
+        std::uint32_t n = data[i] << 16;
+        if (rem == 2) n |= data[i + 1] << 8;
+        out.push_back(kEncodeTable[(n >> 18) & 0x3F]);
+        out.push_back(kEncodeTable[(n >> 12) & 0x3F]);
+        out.push_back(rem == 2 ? kEncodeTable[(n >> 6) & 0x3F] : '=');
+        out.push_back('=');
+    }
+    return out;
+}
+
+std::string extractMimeType(const std::string& contentTypeHeader) {
+    // Get just the type/subtype (e.g. "image/png") before any semicolons
+    std::string::size_type semi = contentTypeHeader.find(';');
+    std::string mimeType = (semi != std::string::npos)
+        ? contentTypeHeader.substr(0, semi)
+        : contentTypeHeader;
+    // Trim whitespace
+    while (!mimeType.empty() && (mimeType.back() == ' ' || mimeType.back() == '\t')) {
+        mimeType.pop_back();
+    }
+    while (!mimeType.empty() && (mimeType.front() == ' ' || mimeType.front() == '\t')) {
+        mimeType.erase(mimeType.begin());
+    }
+    return mimeType;
+}
+
+std::string extractContentId(const std::string& contentIdHeader) {
+    // Strip angle brackets: "<ii_mrnoxu771>" -> "ii_mrnoxu771"
+    std::string cid = contentIdHeader;
+    if (!cid.empty() && cid.front() == '<') {
+        cid.erase(cid.begin());
+    }
+    if (!cid.empty() && cid.back() == '>') {
+        cid.pop_back();
+    }
+    return cid;
+}
+
+std::string extractFilename(const std::string& contentDisposition,
+                            const std::string& contentType) {
+    // Try Content-Disposition filename= first
+    auto extractParam = [](const std::string& header, const std::string& param) -> std::string {
+        std::string lower = header;
+        std::transform(lower.begin(), lower.end(), lower.begin(),
+                       [](unsigned char c) { return std::tolower(c); });
+        std::string::size_type pos = lower.find(param + "=");
+        if (pos == std::string::npos) return "";
+        pos += param.size() + 1;
+        if (pos < header.size() && header[pos] == '"') {
+            pos++;
+            std::string::size_type end = header.find('"', pos);
+            if (end != std::string::npos) return header.substr(pos, end - pos);
+        } else {
+            std::string::size_type end = pos;
+            while (end < header.size() && header[end] != ';' &&
+                   header[end] != ' ' && header[end] != '\r' && header[end] != '\n') {
+                end++;
+            }
+            return header.substr(pos, end - pos);
+        }
+        return "";
+    };
+
+    std::string filename = extractParam(contentDisposition, "filename");
+    if (filename.empty()) {
+        filename = extractParam(contentType, "name");
+    }
+    return filename;
+}
+
+std::string replaceCidWithBase64(const std::string& html,
+                                 const std::vector<MimePart>& parts) {
+    std::string result = html;
+
+    for (const auto& part : parts) {
+        if (part.contentId.empty()) continue;
+
+        // Build the cid: reference to search for
+        std::string cidRef = "cid:" + part.contentId;
+
+        // Check if this cid is referenced in the HTML
+        if (result.find(cidRef) == std::string::npos) continue;
+
+        // Decode the attachment body (typically base64-encoded in email)
+        std::string rawData;
+        std::string enc = part.transferEncoding;
+        std::transform(enc.begin(), enc.end(), enc.begin(),
+                       [](unsigned char c) { return std::tolower(c); });
+        if (enc.find("base64") != std::string::npos) {
+            rawData = decodeBase64(part.body);
+        } else {
+            rawData = part.body;
+        }
+
+        // Re-encode to base64 (clean, no line breaks) for data URI
+        std::string base64Data = encodeBase64(rawData);
+
+        // Build data URI: data:image/png;base64,iVBOR...
+        std::string mimeType = extractMimeType(part.contentType);
+        std::string dataUri = "data:" + mimeType + ";base64," + base64Data;
+
+        // Replace all occurrences of cid:xxx with the data URI
+        std::string::size_type pos = 0;
+        while ((pos = result.find(cidRef, pos)) != std::string::npos) {
+            result.replace(pos, cidRef.size(), dataUri);
+            pos += dataUri.size();
+        }
+    }
+
+    return result;
 }
 
 }  // namespace detail
