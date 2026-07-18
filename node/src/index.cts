@@ -1,10 +1,8 @@
 import * as path from 'path';
-import { createRequire } from 'module';
 import { IFile, ParseEmailResult } from './types.js';
 
-// Load native addon - use import.meta.dirname (ESM in Node 20.11+/21.2+)
-const packageRoot = path.resolve(import.meta.dirname, '..');
-const require = createRequire(import.meta.url);
+// Load native addon - CJS uses __dirname
+const packageRoot = path.resolve(__dirname, '..');
 const addon = require(path.join(packageRoot, 'build', 'Release', 'parser.node'));
 
 export async function parseEmail(buffer: Buffer): Promise<ParseEmailResult> {

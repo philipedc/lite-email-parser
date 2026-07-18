@@ -2,7 +2,7 @@
   "name": "lite-email-parser",
   "version": "2.0.0",
   "description": "Parse email to get signature, replies, attachments and inline images",
-  "main": "./dist/cjs/index.js",
+  "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -12,8 +12,8 @@
         "default": "./dist/index.js"
       },
       "require": {
-        "types": "./dist/cjs/index.d.ts",
-        "default": "./dist/cjs/index.js"
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
       }
     }
   },
@@ -33,12 +33,25 @@
   "scripts": {
     "install": "prebuild-install || node-gyp rebuild",
     "build:native": "node-gyp rebuild",
-    "build:ts": "npx tsc && npx tsc --module commonjs --outDir dist/cjs --declaration && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
+    "build:ts": "npx tsc",
     "build": "npm run build:native && npm run build:ts",
-    "prebuild": "prebuildify --napi --strip",
+    "prebuild": "node-gyp rebuild && tar -czf parser-v2.0.0-napi-v9-linux-x64.tar.gz -C build/Release parser.node",
     "test": "npx -y tsx samples/sample.ts"
   },
-  "author": "philipedc",
+  "contributors": [
+    {
+      "name": "Henrique Teixeira Silva",
+      "email": "henriqueteixeirasilva16@gmail.com",
+      "url": "https://github.com/enriqTS"
+    },
+    "Henrique Teixeira Silva <henriqueteixeirasilva16@gmail.com> (https://github.com/enriqTS)",
+    {
+      "name": "Philipe Dutra Cunha",
+      "email": "philipedtc@gmail.com",
+      "url": "https://github.com/philipedc"
+    },
+    "Philipe Dutra Cunha <philipedtc@gmail.com> (https://github.com/philipedc)"
+  ],
   "type": "module",
   "repository": {
     "type": "git",
@@ -67,7 +80,6 @@
   "devDependencies": {
     "@types/node": "^20.11.0",
     "node-gyp": "^13.0.0",
-    "prebuildify": "^6.0.0",
     "typescript": "^7.0.2"
   }
 }
