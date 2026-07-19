@@ -1,5 +1,5 @@
 {
-  "name": "@pdc-email-parser/win32-x64",
+  "name": "@lite-email-parser-native/win32-x64",
   "version": "2.0.4",
   "description": "lite-email-parser native binary for win32-x64",
   "os": ["win32"],

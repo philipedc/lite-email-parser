@@ -63,11 +63,11 @@
   ],
   "dependencies": {},
   "optionalDependencies": {
-    "@pdc-email-parser/linux-x64": "2.1.0",
-    "@pdc-email-parser/linux-arm64": "2.1.0",
-    "@pdc-email-parser/darwin-x64": "2.1.0",
-    "@pdc-email-parser/darwin-arm64": "2.1.0",
-    "@pdc-email-parser/win32-x64": "2.1.0"
+    "@lite-email-parser-native/linux-x64": "2.1.0",
+    "@lite-email-parser-native/linux-arm64": "2.1.0",
+    "@lite-email-parser-native/darwin-x64": "2.1.0",
+    "@lite-email-parser-native/darwin-arm64": "2.1.0",
+    "@lite-email-parser-native/win32-x64": "2.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

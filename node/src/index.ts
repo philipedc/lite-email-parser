@@ -6,11 +6,11 @@ const _require = createRequire(import.meta.url);
 
 // Map of platform-arch to the corresponding scoped package name
 const PLATFORM_PACKAGES: Record<string, string> = {
-  'linux-x64': '@pdc-email-parser/linux-x64',
-  'linux-arm64': '@pdc-email-parser/linux-arm64',
-  'darwin-x64': '@pdc-email-parser/darwin-x64',
-  'darwin-arm64': '@pdc-email-parser/darwin-arm64',
-  'win32-x64': '@pdc-email-parser/win32-x64',
+  'linux-x64': '@lite-email-parser-native/linux-x64',
+  'linux-arm64': '@lite-email-parser-native/linux-arm64',
+  'darwin-x64': '@lite-email-parser-native/darwin-x64',
+  'darwin-arm64': '@lite-email-parser-native/darwin-arm64',
+  'win32-x64': '@lite-email-parser-native/win32-x64',
 };
 
 function loadAddon() {

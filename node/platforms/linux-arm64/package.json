@@ -1,5 +1,5 @@
 {
-  "name": "@pdc-email-parser/linux-arm64",
+  "name": "@lite-email-parser-native/linux-arm64",
   "version": "2.1.0",
   "description": "lite-email-parser native binary for linux-arm64",
   "os": ["linux"],

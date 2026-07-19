@@ -1,5 +1,5 @@
 {
-  "name": "@pdc-email-parser/darwin-x64",
+  "name": "@lite-email-parser-native/darwin-x64",
   "version": "2.0.4",
   "description": "lite-email-parser native binary for darwin-x64",
   "os": ["darwin"],

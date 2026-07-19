@@ -22,23 +22,23 @@ jobs:
           - os: ubuntu-22.04
             arch: x64
             platform: linux
-            package: "@pdc-email-parser/linux-x64"
+            package: "@lite-email-parser-native/linux-x64"
           - os: ubuntu-22.04-arm
             arch: arm64
             platform: linux
-            package: "@pdc-email-parser/linux-arm64"
+            package: "@lite-email-parser-native/linux-arm64"
           - os: macos-15
             arch: x64
             platform: darwin
-            package: "@pdc-email-parser/darwin-x64"
+            package: "@lite-email-parser-native/darwin-x64"
           - os: macos-14
             arch: arm64
             platform: darwin
-            package: "@pdc-email-parser/darwin-arm64"
+            package: "@lite-email-parser-native/darwin-arm64"
           - os: windows-2022
             arch: x64
             platform: win32
-            package: "@pdc-email-parser/win32-x64"
+            package: "@lite-email-parser-native/win32-x64"
 
     runs-on: ${{ matrix.os }}
     defaults:
