@@ -1,0 +1,8 @@
+This project is licensed under the MIT License (see LICENSE).
+
+It vendors the following third-party component:
+
+Gumbo HTML5 parser (deps/gumbo-parser/)
+  Copyright 2010 Google Inc.
+  Licensed under the Apache License, Version 2.0.
+  See deps/gumbo-parser/LICENSE for the full license text.
