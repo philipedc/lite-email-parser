@@ -21,7 +21,8 @@
     // it emits .d.ts.map files
     // those are used for editors for things like go to and help inspect types
     "noImplicitAny": true,
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "types": ["node"]
   },
   "include": [
     "src/**/*"
