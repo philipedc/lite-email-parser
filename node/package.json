@@ -1,6 +1,6 @@
 {
   "name": "lite-email-parser",
-  "version": "2.0.2",
+  "version": "2.0.4",
   "description": "Parse email to get signature, replies, attachments and inline images",
   "main": "./dist/cjs/index.js",
   "module": "./dist/index.js",
@@ -32,7 +32,9 @@
     "host": "https://github.com/philipedc/lite-email-parser/releases/download/",
     "remote_path": "{version}",
     "package_name": "{module_name}-v{version}-napi-v9-{platform}-{arch}.tar.gz",
-    "napi_versions": [9]
+    "napi_versions": [
+      9
+    ]
   },
   "scripts": {
     "install": "prebuild-install || node-gyp rebuild",
@@ -40,7 +42,7 @@
     "build:ts": "npx tsc && npx tsc --module commonjs --outDir dist/cjs --declaration && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
     "build": "npm run build:native && npm run build:ts",
     "prebuild": "node-gyp rebuild && tar -czf parser-v2.0.0-napi-v9-linux-x64.tar.gz -C build/Release parser.node",
-    "prepublishOnly": "cp -r ../core ./core && mkdir -p ./deps && cp -r ../deps/gumbo-parser ./deps/gumbo-parser",
+    "prepublishOnly": "npm run build:ts && cp -r ../core ./core && mkdir -p ./deps && cp -r ../deps/gumbo-parser ./deps/gumbo-parser",
     "postpublish": "rm -rf ./core ./deps",
     "test": "npx -y tsx samples/sample.ts"
   },
