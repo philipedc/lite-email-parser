@@ -57,6 +57,29 @@ def _relative(path: Path) -> str:
     return path.relative_to(HERE).as_posix()
 
 
+gumbo_include_dirs = [
+    _relative(vendor_gumbo / "src"),
+    _relative(vendor_gumbo / "compat"),
+]
+
+# Gumbo's sources are plain C (C99), compiled as a separate static library.
+# They must NOT be compiled with `-std=c++17` (see below), so they can't be
+# passed directly as `Pybind11Extension` sources alongside the C++ files.
+gumbo_library = (
+    "gumbo",
+    {
+        "sources": sorted(
+            _relative(p) for p in (vendor_gumbo / "src").glob("*.c")
+        ),
+        "include_dirs": gumbo_include_dirs,
+        # Match core/Makefile's C flags. Crucially, this does NOT include
+        # `-std=c++17`: Pybind11Extension's `cxx_std` applies that flag to
+        # every source file in an extension, which GCC only warns about for
+        # .c files but Apple Clang treats as a hard, build-breaking error.
+        "cflags": ["-std=c99"],
+    },
+)
+
 ext_modules = [
     Pybind11Extension(
         "lite_email_parser._core",
@@ -66,19 +89,19 @@ ext_modules = [
                 HERE / "src" / "python_bindings.cpp",
                 vendor_core / "src" / "html_parser.cpp",
                 vendor_core / "src" / "html_extractor.cpp",
-                *(vendor_gumbo / "src").glob("*.c"),
             ]
         ),
         include_dirs=[
             _relative(vendor_core / "include"),
-            _relative(vendor_gumbo / "src"),
-            _relative(vendor_gumbo / "compat"),
+            *gumbo_include_dirs,
         ],
+        libraries=["gumbo"],
         cxx_std=17,
     ),
 ]
 
 setup(
+    libraries=[gumbo_library],
     ext_modules=ext_modules,
     cmdclass={"build_ext": build_ext},
 )
