@@ -10,7 +10,8 @@ on:
         required: true
 
 permissions:
-  contents: write
+  id-token: write
+  contents: read
 
 jobs:
   build-and-publish:
@@ -95,8 +96,6 @@ jobs:
         run: |
           cd "platforms/${{ matrix.platform }}-${{ matrix.arch }}"
           npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-main:
     needs: build-and-publish
@@ -140,5 +139,3 @@ jobs:
 
       - name: Publish main package
         run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
