@@ -1,8 +1,8 @@
 {
   "name": "lite-email-parser",
-  "version": "2.0.4",
+  "version": "2.1.0",
   "description": "Parse email to get signature, replies, attachments and inline images",
-  "main": "./dist/cjs/index.js",
+  "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -12,38 +12,18 @@
         "default": "./dist/index.js"
       },
       "require": {
-        "types": "./dist/cjs/index.d.ts",
-        "default": "./dist/cjs/index.js"
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
       }
     }
   },
   "files": [
-    "dist/",
-    "binding.gyp",
-    "src/addon.cpp",
-    "core/include/",
-    "core/src/*.cpp",
-    "deps/gumbo-parser/src/*.c",
-    "deps/gumbo-parser/src/*.h"
+    "dist/"
   ],
-  "binary": {
-    "module_name": "parser",
-    "module_path": "./build/Release/",
-    "host": "https://github.com/philipedc/lite-email-parser/releases/download/",
-    "remote_path": "{version}",
-    "package_name": "{module_name}-v{version}-napi-v9-{platform}-{arch}.tar.gz",
-    "napi_versions": [
-      9
-    ]
-  },
   "scripts": {
-    "install": "prebuild-install || node-gyp rebuild",
     "build:native": "node-gyp rebuild",
-    "build:ts": "npx tsc && npx tsc --module commonjs --outDir dist/cjs --declaration && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
+    "build:ts": "npx tsc",
     "build": "npm run build:native && npm run build:ts",
-    "prebuild": "node-gyp rebuild && tar -czf parser-v2.0.0-napi-v9-linux-x64.tar.gz -C build/Release parser.node",
-    "prepublishOnly": "npm run build:ts && cp -r ../core ./core && mkdir -p ./deps && cp -r ../deps/gumbo-parser ./deps/gumbo-parser",
-    "postpublish": "rm -rf ./core ./deps",
     "test": "npx -y tsx samples/sample.ts"
   },
   "contributors": [
@@ -81,12 +61,17 @@
     "email-to-html",
     "signature-remover"
   ],
-  "dependencies": {
-    "node-addon-api": "^8.0.0",
-    "prebuild-install": "^7.1.2"
+  "dependencies": {},
+  "optionalDependencies": {
+    "@pdc-email-parser/linux-x64": "2.1.0",
+    "@pdc-email-parser/linux-arm64": "2.1.0",
+    "@pdc-email-parser/darwin-x64": "2.1.0",
+    "@pdc-email-parser/darwin-arm64": "2.1.0",
+    "@pdc-email-parser/win32-x64": "2.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
+    "node-addon-api": "^8.0.0",
     "node-gyp": "^13.0.0",
     "typescript": "^7.0.2"
   }

@@ -1,0 +1,14 @@
+{
+  "name": "@pdc-email-parser/linux-x64",
+  "version": "2.0.4",
+  "description": "lite-email-parser native binary for linux-x64",
+  "os": ["linux"],
+  "cpu": ["x64"],
+  "main": "parser.node",
+  "files": ["parser.node"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/philipedc/lite-email-parser.git"
+  }
+}
