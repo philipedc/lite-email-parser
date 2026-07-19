@@ -1,0 +1,125 @@
+name: Build and publish platform packages
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 2.1.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-publish:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            arch: x64
+            platform: linux
+            package: "@pdc-email-parser/linux-x64"
+          - os: ubuntu-22.04-arm
+            arch: arm64
+            platform: linux
+            package: "@pdc-email-parser/linux-arm64"
+          - os: macos-13
+            arch: x64
+            platform: darwin
+            package: "@pdc-email-parser/darwin-x64"
+          - os: macos-14
+            arch: arm64
+            platform: darwin
+            package: "@pdc-email-parser/darwin-arm64"
+          - os: windows-2022
+            arch: x64
+            platform: win32
+            package: "@pdc-email-parser/win32-x64"
+
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: node
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build native addon
+        run: npx node-gyp rebuild
+
+      - name: Resolve version
+        id: version
+        run: echo "tag=${{ github.event.release.tag_name || inputs.version }}" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Prepare platform package
+        shell: bash
+        run: |
+          PLATFORM_DIR="platforms/${{ matrix.platform }}-${{ matrix.arch }}"
+          mkdir -p "$PLATFORM_DIR"
+
+          # Copy the compiled binary
+          cp build/Release/parser.node "$PLATFORM_DIR/parser.node"
+
+          # Write the package.json with the correct version
+          cat > "$PLATFORM_DIR/package.json" << EOF
+          {
+            "name": "${{ matrix.package }}",
+            "version": "${{ steps.version.outputs.tag }}",
+            "description": "lite-email-parser native binary for ${{ matrix.platform }}-${{ matrix.arch }}",
+            "os": ["${{ matrix.platform }}"],
+            "cpu": ["${{ matrix.arch }}"],
+            "main": "parser.node",
+            "files": ["parser.node"],
+            "license": "MIT",
+            "repository": {
+              "type": "git",
+              "url": "git+https://github.com/philipedc/lite-email-parser.git"
+            }
+          }
+          EOF
+
+      - name: Publish platform package
+        shell: bash
+        run: |
+          cd "platforms/${{ matrix.platform }}-${{ matrix.arch }}"
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-main:
+    needs: build-and-publish
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: node
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build TypeScript
+        run: npx tsc
+
+      - name: Publish main package
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
