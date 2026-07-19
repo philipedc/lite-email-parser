@@ -25,7 +25,8 @@
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")",
         "<(src_root)core/include",
-        "<(src_root)deps/gumbo-parser/src"
+        "<(src_root)deps/gumbo-parser/src",
+        "<(src_root)deps/gumbo-parser/compat"
       ],
       "dependencies": [
         "<!(node -p \"require('node-addon-api').targets\"):node_addon_api"
