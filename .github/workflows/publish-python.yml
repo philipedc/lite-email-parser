@@ -1,0 +1,127 @@
+name: Build and publish Python package
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 2.1.0)'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  resolve-version:
+    runs-on: ubuntu-22.04
+    outputs:
+      version: ${{ steps.version.outputs.tag }}
+    steps:
+      - name: Resolve version
+        id: version
+        run: echo "tag=${{ github.event.release.tag_name || inputs.version }}" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+  build-wheels:
+    needs: resolve-version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            cibw-archs: "x86_64"
+          - os: ubuntu-22.04-arm
+            cibw-archs: "aarch64"
+          - os: macos-15
+            cibw-archs: "x86_64"
+          - os: macos-14
+            cibw-archs: "arm64"
+          - os: windows-2022
+            cibw-archs: "AMD64"
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync package version
+        shell: bash
+        run: |
+          VERSION="${{ needs.resolve-version.outputs.version }}"
+          python3 -c "
+          import re
+          from pathlib import Path
+          path = Path('python/pyproject.toml')
+          text = path.read_text()
+          text = re.sub(r'^version = \".*\"', f'version = \"$VERSION\"', text, count=1, flags=re.MULTILINE)
+          path.write_text(text)
+          "
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v3
+        with:
+          package-dir: python
+          output-dir: wheelhouse
+        env:
+          CIBW_ARCHS: ${{ matrix.cibw-archs }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}-${{ matrix.cibw-archs }}
+          path: wheelhouse/*.whl
+
+  build-sdist:
+    needs: resolve-version
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Sync package version
+        shell: bash
+        run: |
+          VERSION="${{ needs.resolve-version.outputs.version }}"
+          python3 -c "
+          import re
+          from pathlib import Path
+          path = Path('python/pyproject.toml')
+          text = path.read_text()
+          text = re.sub(r'^version = \".*\"', f'version = \"$VERSION\"', text, count=1, flags=re.MULTILINE)
+          path.write_text(text)
+          "
+
+      - name: Build sdist
+        run: |
+          python3 -m pip install build
+          python3 -m build --sdist --outdir dist python
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+
+  publish:
+    needs: [build-wheels, build-sdist]
+    runs-on: ubuntu-22.04
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: sdist
+          path: dist
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
