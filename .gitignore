@@ -9,3 +9,13 @@ prebuilds
 *.tar.gz
 *.gperf
 *.in
+!MANIFEST.in
+
+# Python
+_vendor/
+*.egg-info/
+*.so
+*.pyd
+*.dll
+__pycache__/
+*.pyc

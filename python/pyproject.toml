@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=68", "pybind11>=2.12"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lite-email-parser"
+version = "2.1.7"
+description = "Parse email to get signature, replies, attachments and inline images"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+authors = [
+  { name = "Henrique Teixeira Silva", email = "henriqueteixeirasilva16@gmail.com" },
+  { name = "Philipe Dutra Cunha", email = "philipedtc@gmail.com" },
+]
+keywords = [
+  "email",
+  "parser",
+  "email-parser",
+  "extract-attachments",
+  "remove-signature",
+  "remove-replies",
+  "inline-images",
+  "lite-email-parser",
+  "email-to-html",
+  "signature-remover",
+]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: C++",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Topic :: Communications :: Email",
+  "Topic :: Text Processing :: Markup :: HTML",
+]
+
+[project.urls]
+Homepage = "https://github.com/philipedc/lite-email-parser"
+Repository = "https://github.com/philipedc/lite-email-parser"
+Issues = "https://github.com/philipedc/lite-email-parser/issues"
+
+[tool.setuptools]
+packages = ["lite_email_parser"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+lite_email_parser = ["*.pyi", "py.typed"]
+
+[tool.cibuildwheel]
+build = "cp39-* cp310-* cp311-* cp312-* cp313-*"
+skip = "*-musllinux* *_i686 *-win32"
+
+[tool.cibuildwheel.linux]
+archs = ["x86_64", "aarch64"]
+
+[tool.cibuildwheel.macos]
+archs = ["x86_64", "arm64"]
+
+[tool.cibuildwheel.windows]
+archs = ["AMD64"]

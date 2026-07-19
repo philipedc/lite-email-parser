@@ -1,0 +1,4 @@
+include README.md
+recursive-include _vendor *.c *.h *.cpp *.hpp
+recursive-include src *.cpp *.h
+recursive-include lite_email_parser *.pyi py.typed
