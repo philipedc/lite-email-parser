@@ -1,6 +1,6 @@
 {
   "name": "lite-email-parser",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "description": "Parse email to get signature, replies, attachments and inline images",
   "main": "./dist/cjs/index.js",
   "module": "./dist/index.js",
@@ -20,7 +20,11 @@
   "files": [
     "dist/",
     "binding.gyp",
-    "src/addon.cpp"
+    "src/addon.cpp",
+    "core/include/",
+    "core/src/*.cpp",
+    "deps/gumbo-parser/src/*.c",
+    "deps/gumbo-parser/src/*.h"
   ],
   "binary": {
     "module_name": "parser",
@@ -36,6 +40,8 @@
     "build:ts": "npx tsc && npx tsc --module commonjs --outDir dist/cjs --declaration && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
     "build": "npm run build:native && npm run build:ts",
     "prebuild": "node-gyp rebuild && tar -czf parser-v2.0.0-napi-v9-linux-x64.tar.gz -C build/Release parser.node",
+    "prepublishOnly": "cp -r ../core ./core && mkdir -p ./deps && cp -r ../deps/gumbo-parser ./deps/gumbo-parser",
+    "postpublish": "rm -rf ./core ./deps",
     "test": "npx -y tsx samples/sample.ts"
   },
   "contributors": [
