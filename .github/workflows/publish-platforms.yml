@@ -95,7 +95,9 @@ jobs:
         shell: bash
         run: |
           cd "platforms/${{ matrix.platform }}-${{ matrix.arch }}"
-          npm publish --access public
+          npm publish --access public || npm publish --access public --provenance false
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-main:
     needs: build-and-publish
@@ -138,4 +140,6 @@ jobs:
         run: npx tsc
 
       - name: Publish main package
-        run: npm publish --access public
+        run: npm publish --access public || npm publish --access public --provenance false
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
